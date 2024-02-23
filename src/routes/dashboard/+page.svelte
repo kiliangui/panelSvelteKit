@@ -1,6 +1,8 @@
 
 <script>
   import {Button} from "$lib/components/ui/button";
+  import Server from "$lib/components/elements/Server.svelte";
+
   export let data;
 
 </script>
@@ -12,9 +14,9 @@
   {/if}
   <h1>Owned Server</h1>
   {#each data.OwnedServers as server}
+    <Server server={server}/>
     <div class="flex flex-col items-center gap-4">
       <h1 class="text-3xl">{server.name}</h1>
-      <Button href="/server/{server.id}" >View Server</Button>
     </div>
   {/each}
   <h1>AllowedServer</h1>
@@ -22,10 +24,11 @@
         <div class="flex flex-col items-center gap-4">
 
         <h1 class="text-3xl">{server.name}</h1>
-        <a href="/server/{server.id}" class="text-blue-500">View Server</a>
+          <p>{server.status}</p>
+        <a href="/dashboard/server/{server.id}" class="text-blue-500">View Server</a>
         </div>
     {/each}
   {#if data.session}
-    <a href="/create-server" class="text-blue-500">Create Server</a>
+    <a href="/dashboard/create" class="text-blue-500">Create Server</a>
   {/if}
 </div>

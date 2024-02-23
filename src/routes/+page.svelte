@@ -1,5 +1,6 @@
 <script>
   import { page } from "$app/stores";
+  import ServerConfigurator from "$lib/components/elements/ServerConfigurator.svelte";
 </script>
 
 <div class="h-full flex flex-col items-center justify-center gap-4">
@@ -7,4 +8,5 @@
   {#if $page.data.session}
     Welcome back, <span class="text-4xl">{$page.data.session.user?.name}!</span>
   {/if}
+  <ServerConfigurator/>
 </div>

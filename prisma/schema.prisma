@@ -13,6 +13,16 @@ datasource db {
   // directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
 
+model Offer {
+  id        String    @id @default(cuid())
+  cpu       Float
+  ram       Int
+  disk      Int
+  User      User[]
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -44,14 +54,17 @@ model Session {
 }
 
 model User {
-  id            String       @id @default(cuid())
-  name          String?
-  email         String?      @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  servers       UserServer[]
+  id             String       @id @default(cuid())
+  distantId      Int?         @unique
+  name           String?
+  email          String?      @unique
+  emailVerified  DateTime?
+  image          String?
+  accounts       Account[]
+  sessions       Session[]
+  servers        UserServer[]
+  current_offer  Offer?       @relation(references: [id], onDelete: Cascade, fields: [currentOfferId])
+  currentOfferId String?
 }
 
 model VerificationToken {
@@ -63,13 +76,22 @@ model VerificationToken {
 }
 
 model Server {
-  id        String       @id @default(cuid())
-  name      String
-  url       String
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id                String       @id @default(cuid())
+  distantId         Int?         @unique
+  distantIdentifier String?
+  uuid              String?      @unique
+  name              String
+  version           String
+  cpu               Float
+  ram               Int
+  disk              Int
+  type              String       @default("vanilla")
+  status            String       @default("creation")
+  domain            String
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
   // Users allowed to access the server and their roles
-  users     UserServer[]
+  users             UserServer[]
 }
 
 model UserServer {
