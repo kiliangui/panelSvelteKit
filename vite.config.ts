@@ -101,15 +101,12 @@ const webSocketServer = {
 
 						wsSocket.send(JSON.stringify({"event":"auth","args": [ws.token]}))
 						wsSocket.on("message", (data) => {
-							console.log(data)
 							// data is <Buffer ... >
 							const dataString = data.toString();
 							const dataJson = JSON.parse(dataString);
 							if (dataJson.event == "auth success") {
-								console.log("auth success")
 								wsSocket.send(JSON.stringify({"event":"send logs"}))
 							}
-							console.log(dataJson)
 							socket.emit("eventFromServer", JSON.parse(data))
 
 						})
