@@ -24,10 +24,38 @@ import { io } from 'socket.io-client'
 const socket = io()
 
 socket.emit('auth',{id:server.id})
-socket.on('eventFromServer', (message) => {
-    console.log(message)
+socket.on('eventFromServer', (data) => {
+    console.log(data);
+    if (data.args && data.args.length !== 1) return;
+    if (data.event === "stats") {
+        data.args[0] = JSON.parse(data.args[0])
+        cpu =  Math.ceil(Math.min(100,data.args[0]["cpu_absolute"]));
+        ram = Math.ceil(data.args[0]["memory_bytes"]/1024/1024);
+        disk = Math.round((data.args[0]["disk_bytes"]/1024/1024/1024 + Number.EPSILON) * 100) / 100;
+    }
+    if (data.event === "console output") {
+        let log = data.args[0];
+        // get the Ansi color
+        var format = ansi.format(function (styles,color,background,text){
+            console.log(styles)
+            let stylestring = "";
+            stylestring += styles.bold ? "font-weight: bold;":"";
+            stylestring += styles.italic ? "font-style: italic;":"";
+            stylestring += styles.underline ? "text-decoration: underline;":"";
+            stylestring += styles.strikethrough ? "text-decoration: line-through;":"";
+            stylestring += color ? "color: "+color+";":"";
+            stylestring += background ? "background-color: "+background+";":"";
+            return stylestring;
+        })
+        let color = format(log);
+        console.log("COLOOOOR : ",color)
+        // remove ansii color
+        log = log.replace(/\x1b\[[0-9;]*m/g, '');
+        console.log(log)
+        logs = [...logs, [log,color]];
+    }
 })
-socket.on('stats', (message) => {
+socket.on('', (message) => {
     console.log(message)
     cpu  = Math.ceil(Math.min(100,message.cpu_absolute));
     ram = Math.ceil(message.memory_bytes/1024/1024);

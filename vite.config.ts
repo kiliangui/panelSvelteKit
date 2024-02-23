@@ -95,7 +95,9 @@ const webSocketServer = {
 					}
 					const wsSocket = new WebSocket(ws.socket);
 					wsSocket.onopen = () => {
-						console.log("WS connected")
+						socket.on("disconnect", () => {
+							wsSocket.close()
+						})
 
 						wsSocket.send(JSON.stringify({"event":"auth","args": [ws.token]}))
 						wsSocket.on("message", (data) => {
