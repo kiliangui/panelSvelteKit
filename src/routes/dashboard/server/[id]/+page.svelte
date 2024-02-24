@@ -20,6 +20,7 @@ let disk = 0;
 let logs : object[] = [];
 // use io websocket
 import { io } from 'socket.io-client'
+import {Input} from "$lib/components/ui/input";
 
 const socket = io()
 
@@ -127,6 +128,12 @@ onMount(()=>{
 })
 */
 
+let command:string = "";
+function sendCommand(){
+    console.log("SENDING COMMAND")
+    socket.emit('eventFromClient', {event: "send command", args: [command]})
+    command = "";
+}
 </script>
 
 <div>
@@ -144,14 +151,31 @@ onMount(()=>{
     {#if Number(status) >= 200 && Number(status) < 300}
         <RessourceGauge  value="{server.cpu}"/>
     {/if}
-    <ul>
-        {#each logs as log}
-            <li style={log[1]}>{log[0]}</li>
-        {/each}
-    </ul>
-    <RessourceGauge name="CPU usage" value="{cpu}" max={server.cpu} />
-    <RessourceGauge name="RAM usage" value="{ram}" max={server.ram} unit="Mb" />
-    <RessourceGauge name="DISK usage" value="{disk}" max={server.disk} unit="Go" />
+    <div class="flex">
+
+        <section class="flex-2">
+            <h1>{server.name}</h1>
+
+            <ul class="h-80 overflow-scroll ">
+                {#each logs as log}
+                    <li style={log[1]}>{log[0]}</li>
+                {/each}
+            </ul>
+            <div class="flex gap-2 items-center ">
+
+                <Input type="text" id="command" bind:value={command} placeholder="command" />
+                <Button on:click={async (event)=>{
+                    sendCommand()}}>Send</Button>
+
+            </div>
+        </section>
+        <section class="flex-1">
+            <RessourceGauge name="CPU usage" value="{cpu}" max={server.cpu} />
+            <RessourceGauge name="RAM usage" value="{ram}" max={server.ram} unit="Mb" />
+            <RessourceGauge name="DISK usage" value="{disk}" max={server.disk} unit="Go" />
+        </section>
+    </div>
+
     <Button on:click={async() =>{ await fetch(server.id+"/power?/start",{method:"POST",body:""})}}>Start</Button>
     <Button on:click={async() =>{ await fetch(server.id+"/power?/stop",{method:"POST",body:""})}}>Stop</Button>
 </div>

@@ -26,6 +26,7 @@ const webSocketServer = {
 		io.on('connection', async (socket) => {
 			// get the user
 			const cookies = socket.client.request.headers.cookie;
+			let wsSocket:WebSocket | null = null;
 			if (cookies?.includes( "session")) {
 				// get the strip after session-token=
 				const token = cookies.split("session-token=")[1].split(";")[0]
@@ -93,7 +94,7 @@ const webSocketServer = {
 						socket.disconnect()
 						return;
 					}
-					const wsSocket = new WebSocket(ws.socket);
+					wsSocket = new WebSocket(ws.socket);
 					wsSocket.onopen = () => {
 						socket.on("disconnect", () => {
 							wsSocket.close()
@@ -115,6 +116,10 @@ const webSocketServer = {
 			})
 			socket.on('eventFromClient', (data) => {
 				console.log(data)
+				if (data.event == "send command"){
+					if (!wsSocket) return;
+					wsSocket.send(JSON.stringify(data))
+				}
 			})
 		})
 	}
