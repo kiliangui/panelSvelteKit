@@ -6,6 +6,7 @@ import {ExclamationTriangle} from "radix-icons-svelte";
 import {Button} from "$lib/components/ui/button";
 import {onMount} from "svelte";
 import ansi from "ansidec";
+import * as Tabs from "$lib/components/ui/tabs";
 
 
 export let data: any;
@@ -136,6 +137,8 @@ function sendCommand(){
 }
 </script>
 
+
+
 <div>
     <input id="ws" type="hidden" value={wsId.socket+"||"+wsId.token}>
     {#if message}
@@ -149,33 +152,47 @@ function sendCommand(){
         </Alert.Root>
     {/if}
     {#if Number(status) >= 200 && Number(status) < 300}
-        <RessourceGauge  value="{server.cpu}"/>
+        <RessourceGauge  value="{String(server.cpu)}"/>
     {/if}
-    <div class="flex">
+    <Tabs.Root value="main" class="w-[400px]">
+        <Tabs.List>
+            <Tabs.Trigger value="main">Informations</Tabs.Trigger>
+            <Tabs.Trigger on:click={()=>{
+                // change the url to /files/
+                location.href = server.id+"/files";
+            }} value="files">Fichiers</Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Content value="main">
 
-        <section class="flex-2">
-            <h1>{server.name}</h1>
+            <div class="flex">
 
-            <ul class="h-80 overflow-scroll ">
-                {#each logs as log}
-                    <li style={log[1]}>{log[0]}</li>
-                {/each}
-            </ul>
-            <div class="flex gap-2 items-center ">
+                <section class="flex-2">
+                    <h1>{server.name}</h1>
 
-                <Input type="text" id="command" bind:value={command} placeholder="command" />
-                <Button on:click={async (event)=>{
+                    <ul class="h-80 overflow-scroll ">
+                        {#each logs as log}
+                            <li style={log[1]}>{log[0]}</li>
+                        {/each}
+                    </ul>
+                    <div class="flex gap-2 items-center ">
+
+                        <Input type="text" id="command" bind:value={command} placeholder="command" />
+                        <Button on:click={async (event)=>{
                     sendCommand()}}>Send</Button>
 
+                    </div>
+                </section>
+                <section class="flex-1">
+                    <RessourceGauge name="CPU usage" value="{String(cpu)}" max={String(server.cpu)} />
+                    <RessourceGauge name="RAM usage" value="{String(ram)}" max={String(server.ram)} unit="Mb" />
+                    <RessourceGauge name="DISK usage" value="{String(disk)}" max={String(server.disk)} unit="Go" />
+                </section>
             </div>
-        </section>
-        <section class="flex-1">
-            <RessourceGauge name="CPU usage" value="{cpu}" max={server.cpu} />
-            <RessourceGauge name="RAM usage" value="{ram}" max={server.ram} unit="Mb" />
-            <RessourceGauge name="DISK usage" value="{disk}" max={server.disk} unit="Go" />
-        </section>
-    </div>
 
-    <Button on:click={async() =>{ await fetch(server.id+"/power?/start",{method:"POST",body:""})}}>Start</Button>
-    <Button on:click={async() =>{ await fetch(server.id+"/power?/stop",{method:"POST",body:""})}}>Stop</Button>
+            <Button on:click={async() =>{ await fetch(server.id+"/power?/start",{method:"POST",body:""})}}>Start</Button>
+            <Button on:click={async() =>{ await fetch(server.id+"/power?/stop",{method:"POST",body:""})}}>Stop</Button>
+        </Tabs.Content>
+        <Tabs.Content value="files">Change your password here.</Tabs.Content>
+    </Tabs.Root>
+
 </div>
