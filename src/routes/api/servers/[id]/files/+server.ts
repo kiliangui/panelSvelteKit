@@ -29,7 +29,7 @@ export const GET: RequestHandler = async (request) => {
     let files =  []
     let folders = []
     // get the files from the pterodactyl server
-    const res = await fetch(pterourl + "api/client/servers/"+server.distantIdentifier+"/files/list?directory="+path, {
+    const res = await fetch(pterourl + "/api/client/servers/"+server.distantIdentifier+"/files/list?directory="+path, {
         headers: {
             "Authorization": "Bearer "+pteroUserKey,
             "Accept": "application/json"

@@ -1,8 +1,9 @@
 import {pterourl, pteroUserKey} from "../../db.server";
 
 export async function getWs(serverIdentifier:string){
-    console.log(pterourl+ `api/client/servers/${serverIdentifier}/websocket`)
-    const res = await fetch(pterourl+ `api/client/servers/${serverIdentifier}/websocket`, {
+    console.log(pterourl+ `/api/client/servers/${serverIdentifier}/websocket`)
+
+    const res = await fetch(pterourl+ `/api/client/servers/${serverIdentifier}/websocket`, {
         method: "GET",
         headers: {
             "Authorization": `Bearer ${pteroUserKey}`

@@ -93,33 +93,40 @@ const webSocketServer = {
 					})
 					}
 				if (!wsServer) return;
-				console.log(wsServer.distantIdentifier, "WS SERVER")
 				getWs(wsServer.distantIdentifier).then((ws) => {
 					console.log(ws, "WS")
-					if (!ws.token && ws.status != 200) {
+					if (!ws.token || ws.message) {
+						console.log("Error, ", ws.status, "no ws.token included")
 						socket.emit("eventFromServer", {status: ws.status, message: ws.body.message})
 						socket.disconnect()
 						return;
 					}
-					wsSocket = new WebSocket(ws.socket);
-					wsSocket.onopen = () => {
-						socket.on("disconnect", () => {
-							wsSocket.close()
-						})
+					try {
 
-						wsSocket.send(JSON.stringify({"event":"auth","args": [ws.token]}))
-						wsSocket.on("message", (data) => {
-							// data is <Buffer ... >
-							const dataString = data.toString();
-							const dataJson = JSON.parse(dataString);
-							if (dataJson.event == "auth success") {
-								wsSocket.send(JSON.stringify({"event":"send logs"}))
-							}
-							socket.emit("eventFromServer", JSON.parse(data))
+						wsSocket = new WebSocket(ws.socket);
+						wsSocket.onopen = () => {
+							console.log("Socket opened")
+							socket.on("disconnect", () => {
+								wsSocket.close()
+								console.log("Socket closed")
+								return
+							})
+							console.log("AUTHENTICATING the socket")
+							wsSocket.send(JSON.stringify({"event":"auth","args": [ws.token]}))
+							wsSocket.on("message", (data) => {
+								// data is <Buffer ... >
+								const dataString = data.toString();
+								const dataJson = JSON.parse(dataString);
+								console.log(dataJson)
+								if (dataJson.event == "auth success") {
+									wsSocket.send(JSON.stringify({"event":"send logs"}))
+								}
+								socket.emit("eventFromServer", JSON.parse(data))
 
-						})
+							})
+						}
+					})
 					}
-				})
 			})
 			socket.on('eventFromClient', (data) => {
 				console.log(data)
