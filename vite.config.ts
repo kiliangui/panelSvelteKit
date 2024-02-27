@@ -27,7 +27,7 @@ const webSocketServer = {
 			// get the user
 			const cookies = socket.client.request.headers.cookie;
 			let wsServer;
-			console.log(cookies)
+			//console.log(cookies)
 			let wsSocket:WebSocket | null = null;
 			if (cookies?.includes( "session")) {
 				// get the strip after session-token=
@@ -117,7 +117,7 @@ const webSocketServer = {
 								// data is <Buffer ... >
 								const dataString = data.toString();
 								const dataJson = JSON.parse(dataString);
-								console.log(dataJson)
+								//console.log(dataJson)
 								if (dataJson.event == "auth success") {
 									wsSocket.send(JSON.stringify({"event":"send logs"}))
 								}
@@ -125,11 +125,14 @@ const webSocketServer = {
 
 							})
 						}
-					})
 					}
+					catch (e) {
+						console.log(e)
+					}
+				})
 			})
 			socket.on('eventFromClient', (data) => {
-				console.log(data)
+				//console.log(data)
 				if (data.event == "send command"){
 					if (!wsSocket) return;
 					wsSocket.send(JSON.stringify(data))

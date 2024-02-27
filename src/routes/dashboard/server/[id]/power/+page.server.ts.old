@@ -33,21 +33,23 @@ export const actions = {
                 userId: user.id
             }
         })
-        if (!servers) return {status: 500, body: {message: "Internal Server Error"}}
+        if (!servers) return {status: 500, body: {message: "No server found"}}
         let cpu = 0;
         let ram = 0;
-        servers.forEach((serverLink:UserServer) => {
-            const linkedServer = db.server.findUnique({
+        console.log(servers.length)
+        for (let i = 0; i < servers.length; i++) {
+            const linkedServer =await db.server.findUnique({
                 where: {
-                    id: serverLink.serverId
+                    id: servers[i].serverId
                 }
             })
+            console.log("Linked Server : ", linkedServer)
             if (!linkedServer) return {status: 500, body: {message: "Internal Server Error"}}
             if (linkedServer.status == "started"){
                 cpu += linkedServer.cpu;
                 ram += linkedServer.ram;
             }
-        })
+        }
 
         // get the user current offer
         const offer = await db.offer.findUnique({
@@ -55,15 +57,12 @@ export const actions = {
                 id: user.currentOfferId
             }
         })
-        if (!offer) return {status: 500, body: {message: "Internal Server Error"}}
+        console.log("CPU !!!" ,cpu, server.cpu, offer.cpu, ram + server.ram, offer.ram)
+        if (!offer) return {status: 500, body: {message: "User plan not found"}}
         // check if the user has enough resources
-        if (cpu + server.cpu > user.cpu || ram + server.ram > user.ram) {
-            return {
-                status: 403,
-                body: {
-                    message: "Not enough resources"
-                }
-            }
+        if (cpu + server.cpu > offer.cpu || ram + server.ram > offer.ram) {
+            // return not enough resources error
+            return {success: false, message: "Not enough resources"}
         }
         await start(server);
         // update the server
@@ -75,6 +74,12 @@ export const actions = {
                 status: "started"
             }
         })
+        return {
+            status: 200,
+            body: {
+                message: "Server is starting"
+            }
+        }
 
     },
     stop: async (event) => {

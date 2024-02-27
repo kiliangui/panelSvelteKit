@@ -32,9 +32,10 @@ socket.on('eventFromServer', (data) => {
     if (data.args && data.args.length !== 1) return;
     if (data.event === "stats") {
         data.args[0] = JSON.parse(data.args[0])
-        cpu =  Math.ceil(Math.min(100,data.args[0]["cpu_absolute"]));
+        cpu =  Math.ceil(Math.min(server.cpu,data.args[0]["cpu_absolute"]));
         ram = Math.ceil(data.args[0]["memory_bytes"]/1024/1024);
         disk = Math.round((data.args[0]["disk_bytes"]/1024/1024/1024 + Number.EPSILON) * 100) / 100;
+
     }
     if (data.event === "console output") {
         let log = data.args[0];
@@ -67,85 +68,23 @@ let stickBottom = true;
 
 function updateScroll(){
     // scroll to the last item
-    console.log("UPDATING SCROLL", consoleList.scrollTop, consoleList.clientHeight, consoleList.scrollHeight, stickBottom)
+    //console.log("UPDATING SCROLL", consoleList.scrollTop, consoleList.clientHeight, consoleList.scrollHeight, stickBottom)
     if (stickBottom) consoleList.scrollTop = consoleList.scrollHeight;
 }
-onMount(()=>{
+onMount(async ()=>{
 
     consoleList = document.getElementById("consoleList");
     if (!consoleList) return;
-    consoleList.addEventListener("scroll", function(event) {
+    // sleep for 2 seconds
+    await new Promise(r => setTimeout(r, 2000));
+    consoleList.addEventListener("scroll", async function(event) {
         if (consoleList.scrollTop + consoleList.clientHeight + 1 < consoleList.scrollHeight) {
             stickBottom = false;
         } else {
             stickBottom = true;
         }
     });
-    updateScroll();
 })
-
-
-
-/*
-onMount(()=>{
-    console.log("MOUNTED")
-    socket = new WebSocket(wsId.socket);
-    socket.onopen = function (event) {
-        console.log("connected");
-        socket.send(JSON.stringify({
-            "event": "auth",
-            "args": [wsId.token]
-        }));
-    };
-    socket.onmessage = function (event) {
-        let data = JSON.parse(event.data);
-
-        if (data.event === "auth success"){
-            socket.send(JSON.stringify({
-                "event": "send logs",
-                "args": []
-            }));
-        }
-
-
-
-        if (data.args && data.args.length !== 1) return;
-
-        if (data.event === "stats") {
-            data.args[0] = JSON.parse(data.args[0])
-
-            cpu =  Math.ceil(Math.min(100,data.args[0]["cpu_absolute"]));
-            ram = Math.ceil(data.args[0]["memory_bytes"]/1024/1024);
-            disk = Math.round((data.args[0]["disk_bytes"]/1024/1024/1024 + Number.EPSILON) * 100) / 100;
-        }
-
-        if (data.event === "console output") {
-            let log = data.args[0];
-            // get the Ansi color
-            var format = ansi.format(function (styles,color,background,text){
-                console.log(styles)
-                let stylestring = "";
-                stylestring += styles.bold ? "font-weight: bold;":"";
-                stylestring += styles.italic ? "font-style: italic;":"";
-                stylestring += styles.underline ? "text-decoration: underline;":"";
-                stylestring += styles.strikethrough ? "text-decoration: line-through;":"";
-                stylestring += color ? "color: "+color+";":"";
-                stylestring += background ? "background-color: "+background+";":"";
-
-                return stylestring;
-            })
-            let color = format(log);
-            console.log("COLOOOOR : ",color)
-            // remove ansii color
-            log = log.replace(/\x1b\[[0-9;]*m/g, '');
-            console.log(log)
-
-            logs = [...logs, [log,color]];
-
-        }
-    };
-})
-*/
 
 let command:string = "";
 async function sendCommand(){
@@ -209,8 +148,12 @@ async function sendCommand(){
                 </section>
             </div>
 
-            <Button on:click={async() =>{ await fetch(server.id+"/power?/start",{method:"POST",body:""})}}>Start</Button>
-            <Button on:click={async() =>{ await fetch(server.id+"/power?/stop",{method:"POST",body:""})}}>Stop</Button>
+            <Button on:click={async() =>{ const res = await fetch(server.id+"/power?action=start",{method:"POST",body:""});
+                          if (res.status === 200){
+
+                          }
+            }}>Start</Button>
+            <Button on:click={async() =>{ await fetch(server.id+"/power?action=stop",{method:"POST",body:""})}}>Stop</Button>
         </Tabs.Content>
         <Tabs.Content value="files">
             <Files serverId={server.id} serverIdentifier={server.distantIdentifier} />
