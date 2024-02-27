@@ -19,15 +19,16 @@ let cpu = 0;
 let ram = 0;
 let disk = 0;
 let logs : object[] = [];
+
 // use io websocket
 import { io } from 'socket.io-client'
 import {Input} from "$lib/components/ui/input";
+import Files from "$lib/components/dashboard/Files.svelte";
 
 const socket = io()
 
 socket.emit('auth',{id:server.id})
 socket.on('eventFromServer', (data) => {
-    console.log(data);
     if (data.args && data.args.length !== 1) return;
     if (data.event === "stats") {
         data.args[0] = JSON.parse(data.args[0])
@@ -39,7 +40,6 @@ socket.on('eventFromServer', (data) => {
         let log = data.args[0];
         // get the Ansi color
         var format = ansi.format(function (styles,color,background,text){
-            console.log(styles)
             let stylestring = "";
             stylestring += styles.bold ? "font-weight: bold;":"";
             stylestring += styles.italic ? "font-style: italic;":"";
@@ -50,21 +50,39 @@ socket.on('eventFromServer', (data) => {
             return stylestring;
         })
         let color = format(log);
-        console.log("COLOOOOR : ",color)
         // remove ansii color
         log = log.replace(/\x1b\[[0-9;]*m/g, '');
-        console.log(log)
         logs = [...logs, [log,color]];
+
+        updateScroll();
     }
 })
 socket.on('', (message) => {
-    console.log(message)
     cpu  = Math.ceil(Math.min(100,message.cpu_absolute));
     ram = Math.ceil(message.memory_bytes/1024/1024);
     disk = Math.round((message.disk_bytes/1024/1024/1024 + Number.EPSILON) * 100) / 100;
 })
+let consoleList : HTMLElement | null;
+let stickBottom = true;
 
+function updateScroll(){
+    // scroll to the last item
+    console.log("UPDATING SCROLL", consoleList.scrollTop, consoleList.clientHeight, consoleList.scrollHeight, stickBottom)
+    if (stickBottom) consoleList.scrollTop = consoleList.scrollHeight;
+}
+onMount(()=>{
 
+    consoleList = document.getElementById("consoleList");
+    if (!consoleList) return;
+    consoleList.addEventListener("scroll", function(event) {
+        if (consoleList.scrollTop + consoleList.clientHeight + 1 < consoleList.scrollHeight) {
+            stickBottom = false;
+        } else {
+            stickBottom = true;
+        }
+    });
+    updateScroll();
+})
 
 
 
@@ -130,16 +148,22 @@ onMount(()=>{
 */
 
 let command:string = "";
-function sendCommand(){
+async function sendCommand(){
     console.log("SENDING COMMAND")
     socket.emit('eventFromClient', {event: "send command", args: [command]})
     command = "";
+    // sleep for 2 seconds
+    await new Promise(r => setTimeout(r, 2000));
+    console.log("UPDATING SCROLL")
+    updateScroll();
 }
+
 </script>
 
 
 
 <div>
+
     <input id="ws" type="hidden" value={wsId.socket+"||"+wsId.token}>
     {#if message}
         <Alert.Root variant={variant}>
@@ -154,22 +178,19 @@ function sendCommand(){
     {#if Number(status) >= 200 && Number(status) < 300}
         <RessourceGauge  value="{String(server.cpu)}"/>
     {/if}
-    <Tabs.Root value="main" class="w-[400px]">
+    <Tabs.Root value="main" >
         <Tabs.List>
             <Tabs.Trigger value="main">Informations</Tabs.Trigger>
-            <Tabs.Trigger on:click={()=>{
-                // change the url to /files/
-                location.href = server.id+"/files";
-            }} value="files">Fichiers</Tabs.Trigger>
+            <Tabs.Trigger value="files">Fichiers</Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="main">
 
-            <div class="flex">
+            <div class="flex gap-4">
 
                 <section class="flex-2">
                     <h1>{server.name}</h1>
 
-                    <ul class="h-80 overflow-scroll ">
+                    <ul id="consoleList" class="h-80 overflow-scroll ">
                         {#each logs as log}
                             <li style={log[1]}>{log[0]}</li>
                         {/each}
@@ -179,7 +200,6 @@ function sendCommand(){
                         <Input type="text" id="command" bind:value={command} placeholder="command" />
                         <Button on:click={async (event)=>{
                     sendCommand()}}>Send</Button>
-
                     </div>
                 </section>
                 <section class="flex-1">
@@ -192,7 +212,9 @@ function sendCommand(){
             <Button on:click={async() =>{ await fetch(server.id+"/power?/start",{method:"POST",body:""})}}>Start</Button>
             <Button on:click={async() =>{ await fetch(server.id+"/power?/stop",{method:"POST",body:""})}}>Stop</Button>
         </Tabs.Content>
-        <Tabs.Content value="files">Change your password here.</Tabs.Content>
+        <Tabs.Content value="files">
+            <Files serverId={server.id} serverIdentifier={server.distantIdentifier} />
+        </Tabs.Content>
     </Tabs.Root>
 
 </div>

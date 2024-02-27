@@ -21,15 +21,17 @@ const webSocketServer = {
 
 		const io = new Server(server.httpServer)
 		console.log("WS Server started");
-		let wsServer;
+
 
 		io.on('connection', async (socket) => {
 			// get the user
 			const cookies = socket.client.request.headers.cookie;
+			let wsServer;
+			console.log(cookies)
 			let wsSocket:WebSocket | null = null;
 			if (cookies?.includes( "session")) {
 				// get the strip after session-token=
-				const token = cookies.split("session-token=")[1].split(";")[0]
+				const token = cookies.split("authjs.session-token=")[1].split(";")[0]
 				// get the Session from token
 				const session:any = await db.session.findUnique({
 					where: {
@@ -37,14 +39,18 @@ const webSocketServer = {
 					}
 				})
 
-				if (!session) {
+				if (!session || !session.expires) {
 					socket.emit("eventFromServer", {status: 401, message: "Unauthorized"})
 					socket.disconnect()
+					return
 				}
+
+				console.log("VOICI LA SESSION : ", session, !session)
 				// verify if the session is expired
 				if (session.expires.getTime() < new Date().getTime()) {
 					socket.emit("eventFromServer", {status: 401, message: "Unauthorized"})
 					socket.disconnect()
+					return
 				}
 				// get user
 				const res = await db.user.findUnique({
@@ -76,6 +82,7 @@ const webSocketServer = {
 					console.log("Forbidden")
 					socket.emit("eventFromServer", {status: 403, message: "Forbidden"})
 					socket.disconnect()
+					return
 				}
 				socket.emit("eventFromServer", {status: 200, message: "Authorized"})
 				if (!wsServer){
@@ -86,7 +93,7 @@ const webSocketServer = {
 					})
 					}
 				if (!wsServer) return;
-
+				console.log(wsServer.distantIdentifier, "WS SERVER")
 				getWs(wsServer.distantIdentifier).then((ws) => {
 					console.log(ws, "WS")
 					if (!ws.token && ws.status != 200) {

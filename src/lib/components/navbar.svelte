@@ -19,7 +19,7 @@
     class="container flex items-center justify-between w-full px-4 mx-auto max-w-7xl"
   >
     <a href="/" class="text-2xl font-semibold tracking-tight transition-colors"
-      >SvelteKit OAuth
+      >Pragmatism Panel V0.1
     </a>
     <div class="flex items-center gap-2">
       {#if $page.data.session}
