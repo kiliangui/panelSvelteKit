@@ -1,40 +1,34 @@
 import {redirect} from "@sveltejs/kit";
 import {db} from "$lib/db.server";
+import type {Server, User} from "@prisma/client";
 
 export const load = async (event) => {
     const session = await event.locals.getSession();
-    const user = await db.user.findUnique({
+    if (!session?.user?.email) throw redirect(303, `/login`);
+    const user: User | null = await db.user.findUnique({
         where:
-        {   // @ts-ignore
+        {
             email: session?.user?.email
         }
     })
-
-    console.log(user)
-
-    if (!user) {
-        throw redirect(303, `/login`);
-    }
+    if (!user) throw redirect(303, `/login`);
 
     // get servers from db
     const serversUser = await db.userServer.findMany()
     console.log("servers : ",serversUser)
-    // @ts-ignore
-    let OwnedServers = []
-    // @ts-ignore
-    let AllowedServers = []
+    let OwnedServers : Server[] = []
+    let AllowedServers: Server[] = []
     for (let server of serversUser) {
         let serverData = await db.server.findUnique({
             where: {
                 id: server.serverId
             }
         })
+        if (!serverData) continue
         if (server.userId === user.id) {
-            // @ts-ignore
             OwnedServers.push(serverData)
         }
         if (server.userId !== user.id) {
-            // @ts-ignore
             AllowedServers.push(serverData)
         }
     }
@@ -42,9 +36,7 @@ export const load = async (event) => {
 
     return {
         session,
-        // @ts-ignore
         OwnedServers,
-        // @ts-ignore
         AllowedServers
     };
 }
