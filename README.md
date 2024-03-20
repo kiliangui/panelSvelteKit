@@ -1,26 +1,10 @@
-# SvelteKit + Auth.js + Prisma
+# Panel Svelte kit
+This repo is a wrapper for the pterodactyl panel that allow user to reserve servers.
 
-This repo is a template on how you can integrate OAuth in SvelteKit using Auth.js (NextAuth) and persist the user data in a database using Prisma Adapter.
+# The stack
+For this project i use SvelteKit Auth.js and Prisma.
+Its a quick way to set up a project.
+## Be careful
+The implementation for the routes security is not good. 
+I have set the security in the layout.ts, but even if the user dont get the render like that, the +server.ts execute anyway !. You need to check the user on each route.
 
-## Getting Started
-
-clone the repo
-
-```bash
-git clone https://github.com/PrabhuKiran8790/sveltekit-authjs-prisma-template.git
-```
-## Install the dependencies
-```bash
-cd sveltekit-authjs-prisma-template && pnpm i
-```
-## Change the `.env` file
-
-```py
-DATABASE_URL=
-GOOGLE_ID=
-GOOGLE_SECRET=
-GITHUB_ID=
-GITHUB_SECRET=
-AUTH_SECRET=
-NEXTAUTH_SECRET=
-```
